@@ -26,8 +26,8 @@ services:
   # O construye la imagen con la clave: build. Con el valor ./ indicamos la ubicación del archivo Dockerfile para la creación de la imagen.  
     build: ./
 # Ahora el puerto 80 es solo interno, no se expone al host
-    ports: 
-      - 8080:80
+    # ports: 
+    #   - 8080:80
 # Establecemos una lista de variables de entorno que pueden ser utilizadas por los contenedores del servicio APACHE
 # Las variables de entorno tienen el mismo nombre que el servicio MARIADB. Se le puede poner cualquier nombre
     environment: 
@@ -69,9 +69,9 @@ services:
 # Servicio 3: phpmyadmin
   phpmyadmin:
     image: phpmyadmin
-# Publica el puerto 80 del contenedor como 8080 en la red del host de docker    
+# Publica el puerto 80 del contenedor como 9000 en la red del host de docker    
     ports:
-      - 8080:80
+      - 9000:80
     environment:
       - PMA_HOST=mariadb
     depends_on: 

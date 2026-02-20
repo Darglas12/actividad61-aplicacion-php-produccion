@@ -8,8 +8,8 @@ RUN apk add --no-cache \
     bash
 
 # Copiar configuración de Nginx
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
-COPY nginx/init-ssl.sh /usr/local/bin/init-ssl.sh
+COPY ./nginx.conf /etc/nginx/nginx.conf
+COPY ./init-ssl.sh /usr/local/bin/init-ssl.sh
 
 RUN chmod +x /usr/local/bin/init-ssl.sh
 

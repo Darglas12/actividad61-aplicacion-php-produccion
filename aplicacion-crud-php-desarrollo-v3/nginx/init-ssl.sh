@@ -13,24 +13,25 @@ sleep 10
 
 # Intentar obtener certificado con certbot
 if [ ! -d "$CERTPATH" ]; then
-    echo "Obteniendo certificado SSL para $DOMAIN..."
+    echo "Intentando obtener certificado SSL para $DOMAIN..."
     
-    # Primera intención: usar certbot en modo standalone
+    # Intentar solo con el dominio principal, no incluir www
     certbot certonly \
         --standalone \
         --non-interactive \
         --agree-tos \
         --email "$EMAIL" \
         -d "$DOMAIN" \
-        -d "www.$DOMAIN" \
         --http-01-port 80 \
         --cert-name "$DOMAIN" 2>&1 || {
-        echo "Aviso: No se pudo obtener certificado automáticamente."
-        echo "Los certificados se obtendrán cuando el servicio sea accesible."
+        echo "⚠️  Aviso: No se pudo obtener certificado automáticamente."
+        echo "    Intenta más tarde cuando el dominio esté completamente resolviendo."
+        echo "    Ejecuta: docker exec nginx-proxy certbot certonly --standalone -d $DOMAIN"
     }
 else
     echo "✓ Certificado existente encontrado en $CERTPATH"
 fi
 
+echo ""
 echo "Iniciando Nginx..."
 exec nginx -g "daemon off;"
