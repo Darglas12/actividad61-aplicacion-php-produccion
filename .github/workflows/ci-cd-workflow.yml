@@ -11,12 +11,12 @@ env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  # EDITAR ESTOS VALORES:
-  AWS_HOST: "tu-ip-o-dns-aqui.com"           # ← CAMBIAR: IP o DNS de tu servidor AWS
-  AWS_USER: "ubuntu"                         # ← CAMBIAR: usuario SSH (ubuntu, ec2-user, etc)
-  AWS_PORT: "22"                             # ← CAMBIAR: puerto SSH si es diferente
-  DOCKER_IMAGE_NAME: "tu-usuario/crud-php"  # ← CAMBIAR: usuario/repositorio en DockerHub
-  APP_DIRECTORY: "/home/ubuntu/app"          # ← CAMBIAR: directorio donde desplegar en AWS
+  # Configuración específica para Darglas12
+  AWS_HOST: "3.82.191.151"                   # IP del servidor AWS
+  AWS_USER: "ubuntu"                         # Usuario SSH AWS
+  AWS_PORT: "22"                             # Puerto SSH
+  DOCKER_IMAGE_NAME: "darglas12/crud-php"   # Usuario/Repositorio en DockerHub
+  APP_DIRECTORY: "/home/ubuntu/app"          # Directorio donde desplegar en AWS
 
 jobs:
   # ============================================================================
