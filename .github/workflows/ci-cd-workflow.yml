@@ -1,0 +1,211 @@
+name: CI/CD Pipeline - CRUD PHP Application
+
+# Activador: Se ejecuta cada vez que hay un push en main
+on:
+  push:
+    branches:
+      - main
+
+# Variables de entorno globales
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  # EDITAR ESTOS VALORES:
+  AWS_HOST: "tu-ip-o-dns-aqui.com"           # ← CAMBIAR: IP o DNS de tu servidor AWS
+  AWS_USER: "ubuntu"                         # ← CAMBIAR: usuario SSH (ubuntu, ec2-user, etc)
+  AWS_PORT: "22"                             # ← CAMBIAR: puerto SSH si es diferente
+  DOCKER_IMAGE_NAME: "tu-usuario/crud-php"  # ← CAMBIAR: usuario/repositorio en DockerHub
+  APP_DIRECTORY: "/home/ubuntu/app"          # ← CAMBIAR: directorio donde desplegar en AWS
+
+jobs:
+  # ============================================================================
+  # STAGE 1: CONTINUOUS INTEGRATION (CI) - BUILD
+  # ============================================================================
+  build:
+    name: 🔨 Build Docker Image
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        run: |
+          echo "Construyendo imagen Docker desde Dockerfile..."
+          cd aplicacion-crud-php-desarrollo-v3
+          docker build -t ${{ env.DOCKER_IMAGE_NAME }}:latest .
+          docker build -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} .
+          echo "✓ Imagen construida exitosamente"
+      
+      - name: Test Docker image
+        run: |
+          echo "Probando imagen Docker..."
+          docker run --rm ${{ env.DOCKER_IMAGE_NAME }}:latest /usr/sbin/apache2ctl -v
+          echo "✓ Imagen probada correctamente"
+
+  # ============================================================================
+  # STAGE 2: CONTINUOUS DELIVERY (CD) - PUSH TO DOCKERHUB
+  # ============================================================================
+  push:
+    name: 📦 Push to DockerHub
+    runs-on: ubuntu-latest
+    needs: build  # Espera a que build termine exitosamente
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./aplicacion-crud-php-desarrollo-v3
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE_NAME }}:latest
+            ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.DOCKER_IMAGE_NAME }}:v1.0
+          labels: |
+            org.opencontainers.image.title="CRUD PHP Application"
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+  # ============================================================================
+  # STAGE 3: CONTINUOUS DEPLOYMENT (CD) - DEPLOY TO AWS
+  # ============================================================================
+  deploy:
+    name: 🚀 Deploy to AWS Production
+    runs-on: ubuntu-latest
+    needs: push  # Espera a que push termine exitosamente
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Create SSH directory and add identity
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ env.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ env.AWS_PORT }} ${{ env.AWS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+      
+      - name: Deploy to AWS via SSH
+        run: |
+          ssh -i ~/.ssh/id_rsa -p ${{ env.AWS_PORT }} ${{ env.AWS_USER }}@${{ env.AWS_HOST }} << 'EOF'
+          
+          echo "=========================================="
+          echo "  INICIANDO DEPLOYMENT EN PRODUCCIÓN"
+          echo "=========================================="
+          
+          # Crear directorio de aplicación si no existe
+          mkdir -p ${{ env.APP_DIRECTORY }}
+          cd ${{ env.APP_DIRECTORY }}
+          
+          # Crear docker-compose.yml si no existe
+          if [ ! -f docker-compose.yml ]; then
+            echo "Descargando configuración de docker-compose..."
+            # Opción 1: Descargar del repositorio
+            curl -s https://raw.githubusercontent.com/${{ github.repository }}/main/aplicacion-crud-php-desarrollo-v3/docker-compose.yml -o docker-compose.yml
+            # Opción 2: Si la URL anterior falla, crear uno básico
+            if [ ! -f docker-compose.yml ]; then
+              cat > docker-compose.yml << 'COMPOSE'
+          version: '3.8'
+          services:
+            nginx-proxy:
+              image: ${{ env.DOCKER_IMAGE_NAME }}:latest
+              ports:
+                - "80:80"
+                - "443:443"
+              volumes:
+                - letsencrypt:/etc/letsencrypt
+              restart: unless-stopped
+          volumes:
+            letsencrypt:
+          COMPOSE
+            fi
+          fi
+          
+          echo "Deteniendo servicios actuales..."
+          docker-compose down || true
+          
+          echo "Limpiando imagen antigua..."
+          docker rmi ${{ env.DOCKER_IMAGE_NAME }}:latest 2>/dev/null || true
+          
+          echo "Descargando nueva imagen desde DockerHub..."
+          docker pull ${{ env.DOCKER_IMAGE_NAME }}:latest
+          
+          echo "Iniciando servicios..."
+          docker-compose up -d
+          
+          echo "Esperando a que los servicios inicien..."
+          sleep 10
+          
+          echo "Verificando estado de los contenedores..."
+          docker-compose ps
+          
+          echo "=========================================="
+          echo "  ✓ DEPLOYMENT COMPLETADO"
+          echo "=========================================="
+          
+          EOF
+      
+      - name: Verify deployment
+        run: |
+          echo "Verificando que la aplicación está respondiendo..."
+          sleep 5
+          
+          # Intentar conectar al servidor
+          ssh -i ~/.ssh/id_rsa -p ${{ env.AWS_PORT }} ${{ env.AWS_USER }}@${{ env.AWS_HOST }} << 'EOF'
+          
+          echo "Estado de contenedores en producción:"
+          docker-compose ps
+          
+          echo ""
+          echo "Logs recientes:"
+          docker-compose logs --tail=20
+          
+          EOF
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_rsa
+
+  # ============================================================================
+  # STAGE 4: NOTIFICACIONES
+  # ============================================================================
+  notify:
+    name: 📢 Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [build, push, deploy]
+    if: always()
+    
+    steps:
+      - name: Deployment Status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ DEPLOYMENT EXITOSO"
+            echo "La aplicación ha sido desplegada correctamente en:"
+            echo "   Servidor: ${{ env.AWS_HOST }}"
+            echo "   Imagen: ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"
+            exit 0
+          else
+            echo "❌ DEPLOYMENT FALLÓ"
+            echo "Revisa los logs para más detalles"
+            exit 1
+          fi
+
