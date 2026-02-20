@@ -1,0 +1,58 @@
+# La directiva version se considera obsoleta
+#version: '3'
+#version: '3.8'
+# Definimos una aplicación con 3 servicios (microservicios)
+services: 
+# Servicio 1: Aplicacion CRUD PHP dockerizada. Construye una imagen a partir de las instrucciones incluidas en un archivo Dockerfile. 
+  apache-php-crud:
+  # Podemos usar una imagen predefinida utilizando la clave yaml: image. En este caso: php:8.2-apache. La comento porque NO la vamos a usar.
+    #image: php:8.2-apache 
+  # O construye la imagen con la clave: build. Con el valor ./ indicamos la ubicación del archivo Dockerfile para la creación de la imagen.  
+    build: ./
+# Publica el puerto 80 del contenedor como 80 en la red del host de docker    
+    ports: 
+      - 80:80
+# Establecemos una lista de variables de entorno que pueden ser utilizadas por los contenedores del servicio APACHE
+# Las variables de entorno tienen el mismo nombre que el servicio MARIADB. Se le puede poner cualquier nombre
+    environment: 
+      - MARIADB_HOST=mariadb
+      - MARIADB_DATABASE=${DATABASE}
+      - MARIADB_USER=${USERNAME}
+      - MARIADB_PASSWORD=${PASSWORD}
+    volumes:
+# Define un volumen de tipo "bind-mount"
+      - ./src:/var/www/html 
+    depends_on:
+      - mariadb
+
+
+#
+  mariadb:
+    image: mariadb
+    ports:
+      - 3306:3306
+    environment: 
+# El acceso a las variables de entorno puede ser de dos maneras: $MARIADB_DATABASE ó ${MARIADB_DATABASE} utilizan el valor de la variable MARIADB_DATABASE definida en .env
+      - MARIADB_ROOT_PASSWORD=${ROOT_PASSWORD}
+      - MARIADB_DATABASE=${DATABASE}
+      - MARIADB_USER=${USERNAME}
+      - MARIADB_PASSWORD=${PASSWORD}
+      - LANG=C.UTF-8
+    volumes:
+# Define un volumen de tipo "volume"
+      - mariadb_data:/var/lib/mysql
+#  Las imágenes mysql y mariadb están diseñadas para ejecutar los archivos con extensión .sh, .sql que se encuentran en el directorio /docker-entrypoint-initdb.d del contenedor. Estos archivos se ejecutarán por orden alfabético.
+      - ./sql:/docker-entrypoint-initdb.d 
+  
+# Servicio 3: phpmyadmin
+  phpmyadmin:
+    image: phpmyadmin
+# Publica el puerto 80 del contenedor como 8080 en la red del host de docker    
+    ports:
+      - 8080:80
+    environment:
+      - PMA_HOST=mariadb
+    depends_on: 
+      - mariadb
+volumes:
+  mariadb_data:

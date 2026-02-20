@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">	
+	<title>CRUD PHP</title>
+</head>
+<body>
+<div>
+	<header>
+		<h1>APLICACION CRUD PHP</h1>
+	</header>
+
+	<main>
+	Bienvenido, <?php echo htmlspecialchars($name . " " . $surname); ?><br>
+    Email: <?php echo htmlspecialchars($email); ?>
+	
+	<p><a href="add.html">Alta</a></p>	
+
+	<table border="1">
+	<thead>
+		<tr>
+			<th>Usuario</th>
+			<th>Nombre</th>
+			<th>Apellido</th>
+			<th>Edad</th>
+			<th>Puesto</th>
+			<th>Acciones</th>
+		</tr>
+	</thead>
+	<tbdody>
+    <tr>
+		<td>manuel</td>
+		<td>Manuel</td>
+		<td>Celis</td>
+		<td>56</td>
+		<td>Dependiente</td>
+		<td>
+		<a href="edit.html">Edición</a>
+		<a href="delete.html" onClick="return confirm('¿Está segur@ que desea eliminar el empleado/a?')" >Baja</a></td>
+		</td>
+	</tr>
+	<tr>
+		<td>javier</td>
+		<td>Javier</td>
+		<td>Coloma</td>
+		<td>25</td>
+		<td>Contable</td>
+		<td>
+		<a href="edit.html">Edición</a>
+		<a href="delete.html" onClick="return confirm('¿Está segur@ que desea eliminar el trabajador/a?')" >Baja</a></td>
+		</td>
+	</tr>
+	<tr>
+		<td>maria</td>
+		<td>Maria</td>
+		<td>Donoso</td>
+		<td>45</td>
+		<td>Gerente</td>
+		<td>
+		<a href="edit.html">Edición</a>
+		<a href="delete.html" onClick="return confirm('¿Está segur@ que desea eliminar el trabajador/a?')" >Baja</a></td>
+		</td>
+	</tr>
+	<tr>
+		<td>carmen</td>
+		<td>Carmen</td>
+		<td>Oviedo</td>
+		<td>34</td>
+		<td>Administrativo</td>
+		<td>
+		<a href="edit.html">Edición</a>
+		<a href="delete.html" onClick="return confirm('¿Está segur@ que desea eliminar el trabajador/a?')" >Baja</a></td>
+		</td>
+	</tr>
+	<tr>
+		<td>jana</td>
+		<td>Jana</td>
+		<td>Palencia</td>
+		<td>31</td>
+		<td>Dependiente</td>
+		<td>
+		<a href="edit.html">Edición</a>
+		<a href="delete.html" onClick="return confirm('¿Está segur@ que desea eliminar el trabajador/a?')" >Baja</a></td>
+		</td>
+	</tr>
+	<tr>
+		<td>pascual</td>
+		<td>Pascual</td>
+		<td>Vargas</td>
+		<td>19</td>
+		<td>Dependiente</td>
+		<td>
+		<a href="edit.html">Edición</a>
+		<a href="delete.html" onClick="return confirm('¿Está segur@ que desea eliminar el trabajador/a?')" >Baja</a></td>
+		</td>
+	</tr>
+	<tr>
+		<td>pedro</td>
+		<td>Pedro</td>
+		<td>Zamanillo</td>
+		<td>63</td>
+		<td>Repartidor</td>
+		<td>
+		<a href="edit.html">Edición</a>
+		<a href="delete.html" onClick="return confirm('¿Está segur@ que desea eliminar el trabajador/a?')" >Baja</a></td>
+		</td>
+	</tr>
+	</tbdody>
+	</table>
+	</main>
+	<footer>
+		<p><a href="logout.html">Cerrar sesión (Sign out) </a></p>
+    	Created by the IES Miguel Herrero team &copy; 2026
+  	</footer>
+</div>
+</body>
+</html>
