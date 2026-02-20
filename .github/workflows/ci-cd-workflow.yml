@@ -46,7 +46,9 @@ jobs:
       - name: Test Docker image
         run: |
           echo "Probando imagen Docker..."
-          docker run --rm ${{ env.DOCKER_IMAGE_NAME }}:latest /usr/sbin/apache2ctl -v
+          # El contenedor define ENTRYPOINT ['/usr/sbin/apache2ctl', '-D', 'FOREGROUND']
+          # Por eso debemos sobrescribir el entrypoint para ejecutar el comando de prueba
+          docker run --rm --entrypoint "" ${{ env.DOCKER_IMAGE_NAME }}:latest /usr/sbin/apache2ctl -v
           echo "✓ Imagen probada correctamente"
 
   # ============================================================================
