@@ -65,7 +65,7 @@ jobs:
           echo "✓ Imagen probada correctamente"
 
   # ============================================================================
-  # STAGE 2: CONTINUOUS DELIVERY (CD) - PUSH TO DOCKERHUBr
+  # STAGE 2: CONTINUOUS DELIVERY (CD) - PUSH TO DOCKERHUBrr
   # ============================================================================
   push:
     name: 📦 Push to DockerHub
